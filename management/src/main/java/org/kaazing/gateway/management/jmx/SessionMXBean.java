@@ -51,4 +51,6 @@ public interface SessionMXBean /*extends SessionManagementListener*/ {
     long getLastRoundTripLatency();
 
     long getLastRoundTripLatencyTimestamp();
+
+    void setUserTrace(boolean enabled) throws Exception;
 }

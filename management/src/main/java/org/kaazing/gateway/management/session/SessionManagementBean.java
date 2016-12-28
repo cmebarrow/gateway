@@ -101,4 +101,6 @@ public interface SessionManagementBean extends ManagementBean {
 
     long getLastRoundTripLatencyTimestamp();
 
+    void setUserTrace(boolean enabled);
+
 }

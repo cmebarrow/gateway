@@ -114,4 +114,10 @@ public class SessionMXBeanImpl implements SessionMXBean {
     public long getLastRoundTripLatencyTimestamp() {
         return sessionManagementBean.getLastRoundTripLatencyTimestamp();
     }
+
+
+    @Override
+    public void setUserTrace(boolean enabled) throws Exception {
+        sessionManagementBean.setUserTrace(enabled);
+    }
 }

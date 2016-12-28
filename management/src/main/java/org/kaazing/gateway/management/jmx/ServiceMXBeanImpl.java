@@ -15,7 +15,9 @@
  */
 package org.kaazing.gateway.management.jmx;
 
+import java.security.Principal;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import javax.management.ObjectName;
 import org.kaazing.gateway.management.service.ServiceManagementBean;
@@ -265,5 +267,37 @@ public class ServiceMXBeanImpl implements ServiceMXBean {
             }
         }
     }
+
+    @Override
+    public void setUserTrace(String principalName, boolean enabled) throws Exception {
+        Iterator<Class<Principal>> userPrincipalClasses = serviceManagementBean.getUserPrincipalClasses().iterator();
+        if ((principalName == null) ||
+                (principalName.trim().length() == 0) ||
+                (!userPrincipalClasses.hasNext())) {
+                return;
+        }
+
+        Class<?> principalClass = userPrincipalClasses.next();
+
+        Map<Long, Map<String, String>> sessionPrincipalMap = serviceManagementBean.getLoggedInSessions();
+
+        for (Map.Entry<Long, Map<String, String>> entry : sessionPrincipalMap.entrySet()) {
+            long sessionId = entry.getKey();
+            Map<String, String> userPrincipals = entry.getValue();
+
+            for (Map.Entry<String, String> principal : userPrincipals.entrySet()) {
+                String key = principal.getKey();
+                Class<?> userPrincipalClass = Utils.loadClass(principal.getValue());
+
+                // Case sensitive for both name and class-name.
+                if (key.equals(principalName) && (principalClass.isAssignableFrom(userPrincipalClass))) {
+                    SessionMXBean sessionBean = managementServiceHandler.getSessionMXBean(sessionId);
+                    sessionBean.setUserTrace(enabled);
+                    break;
+                }
+            }
+        }
+    }
+
 }
 

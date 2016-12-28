@@ -21,6 +21,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.security.auth.Subject;
+
+import org.apache.log4j.Level;
+import org.apache.mina.core.filterchain.IoFilterChain;
+import org.apache.mina.core.filterchain.IoFilterChain.Entry;
 import org.apache.mina.core.future.CloseFuture;
 import org.apache.mina.core.write.WriteRequest;
 import org.json.JSONArray;
@@ -30,6 +34,8 @@ import org.kaazing.gateway.management.AbstractManagementBean;
 import org.kaazing.gateway.management.Utils;
 import org.kaazing.gateway.management.service.ServiceManagementBean;
 import org.kaazing.gateway.transport.BridgeSession;
+import org.kaazing.gateway.transport.LoggingFilter;
+import org.kaazing.gateway.transport.ObjectLoggingFilter;
 import org.kaazing.mina.core.session.IoSessionEx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -418,6 +424,46 @@ public class SessionManagementBeanImpl extends AbstractManagementBean implements
             }
         }
         return -1;
+    }
+
+    @Override
+    public void setUserTrace(boolean enabled) {
+        if (enabled) {
+            Entry loggingEntry = session.getFilterChain().getEntry("user.trace");
+            if (loggingEntry != null) {
+                // User trace already active, no-op
+                return;
+            }
+            enableUserTrace();
+        }
+        else {
+            disableUserTrace();
+        }
+    }
+
+    private void disableUserTrace() {
+        String loggerName = "service." + getServiceManagementBean().getServiceType();
+        Entry loggingEntry = session.getFilterChain().getEntry("user.trace");
+        if (loggingEntry != null) {
+            loggingEntry.remove();
+        }
+    }
+
+    private void enableUserTrace() {
+        org.apache.log4j.Logger traceLogger = org.apache.log4j.Logger.getLogger("user.trace");
+        if ( !Level.TRACE.isGreaterOrEqual(traceLogger.getLevel()) ) {
+            traceLogger.setLevel(org.apache.log4j.Level.TRACE);
+        }
+        Logger trace = LoggerFactory.getLogger("user.trace");
+        LoggingFilter logging = new ObjectLoggingFilter(trace, getSession(),  getServiceManagementBean().getServiceType());
+        IoFilterChain filterChain = getSession().getFilterChain();
+        Entry codec = filterChain.getEntry("codec");
+        if (codec != null) {
+            codec.addAfter("user.trace",  logging);
+        }
+        else {
+            filterChain.addLast("user.trace", logging);
+        }
     }
 
 }

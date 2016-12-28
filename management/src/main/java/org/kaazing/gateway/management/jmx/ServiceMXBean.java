@@ -76,5 +76,6 @@ public interface ServiceMXBean {
     void start() throws Exception;
     void stop() throws Exception;
     void restart() throws Exception;
-    void closeSessions(String prinicpalName, String prinicpalClassName) throws Exception;
+    void closeSessions(String principalName, String principalClassName) throws Exception;
+    void setUserTrace(String principalName, boolean enabled) throws Exception;
 }
